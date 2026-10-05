@@ -1,0 +1,22 @@
+name: Build Windows exe
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download ffmpeg
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -OutFile ff.zip
+          Expand-Archive ff.zip -DestinationPath ff
+          Copy-Item (Get-ChildItem ff -Recurse -Filter ffmpeg.exe | Select-Object -First 1).FullName ffmpeg.exe
+      - run: pip install pyinstaller
+      - run: pyinstaller --onefile --windowed --name TeslaStitch --add-binary "ffmpeg.exe;." tesla_stitch_gui.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TeslaStitch-windows
+          path: dist/TeslaStitch.exe
